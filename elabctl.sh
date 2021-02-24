@@ -318,6 +318,12 @@ function install()
         \cp $CONF_FILE ${CONF_FILE}.old
     fi
 
+    echo 50 | dialog --backtitle "$backtitle" --title "$title" --gauge "Grabbing the Dockerfile for the Mayor lab to build the image" 20 80
+
+    # get the Dockerfile and all stuff to build the image
+    git clone --depth 1 -b mayorlab https://github.com/marcelbolten/elabimg.git /tmp/mayorelabimg && rm -rf /tmp/mayorelabimg/.git
+    sleep 1
+
     # get a config file already filled with random passwords/keys
     curl --silent "https://get.elabftw.net/?config" -o "$TMP_CONF_FILE"
     sleep 1
@@ -326,6 +332,11 @@ function install()
     echo 50 | dialog --backtitle "$backtitle" --title "$title" --gauge "Adjusting configuration" 20 80
     sed -i -e "s/SERVER_NAME=localhost/SERVER_NAME=$servername/" $TMP_CONF_FILE
     sed -i -e "s:/var/elabftw:${DATA_DIR}:" $TMP_CONF_FILE
+
+    # Adjust to build mayorelabimg on-the-fly
+    sed -i -e "/  web:/a\    build: /tmp/mayorelabimg" $TMP_CONF_FILE
+    sed -i -e "s@image: elabftw/elabimg:latest@image: elabftw/mayorelabimg:latest@" $TMP_CONF_FILE
+    sed -i -e "s@Europe/Paris@America/Vancouver@" $TMP_CONF_FILE
 
     # disable https
     if [ $usehttps = 0 ]; then
@@ -432,7 +443,7 @@ function self-update()
 function start()
 {
     is-installed
-    docker-compose -f "$CONF_FILE" up -d
+    docker-compose -f "$CONF_FILE" up -d --build
 }
 
 function status()
@@ -496,7 +507,7 @@ function uninstall()
     fi
 
     # remove docker images
-    docker rmi elabftw/elabimg || true
+    docker rmi elabftw/mayorelabimg || true
     docker rmi mysql:5.7 || true
 
     echo ""
@@ -513,7 +524,12 @@ function update()
         backup
         echo "Backup done, now updating."
     fi
-    docker-compose -f "$CONF_FILE" pull
+
+    # download files to build new image, Dockerfile ...
+    git clone --depth 1 -b mayorlab https://github.com/marcelbolten/elabimg.git /tmp/mayorelabimg && rm -rf /tmp/mayorelabimg/.git
+    sleep 1
+
+    # restart the container, it will also build the image
     restart
     echo "Your are now running the latest eLabFTW version."
     echo "Make sure to read the CHANGELOG!"
