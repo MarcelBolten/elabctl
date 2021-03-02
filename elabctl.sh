@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # https://www.elabftw.net
-declare -r ELABCTL_VERSION='2.2.2'
+declare -r ELABCTL_VERSION='2.2.2_mayorlab'
 
 # default backup dir
 declare BACKUP_DIR='/var/backups/elabftw'
@@ -123,7 +123,7 @@ function get-user-conf()
     if [ -f elabctl.conf ]; then
         mv -v elabctl.conf elabctl.conf.old
     fi
-    curl -Ls https://github.com/elabftw/elabctl/raw/master/elabctl.conf -o elabctl.conf
+    curl -Ls https://github.com/marcelbolten/elabctl/raw/mayorlab/elabctl.conf -o elabctl.conf
     echo "Downloaded elabctl.conf."
     echo "Edit it and move it in ~/.config or /etc."
     echo "Or leave it there and always use elabctl from this directory."
@@ -435,7 +435,7 @@ function self-update()
 {
     me=$(command -v "$0")
     echo "Downloading new version to /tmp/elabctl"
-    curl -sL https://raw.githubusercontent.com/elabftw/elabctl/master/elabctl.sh -o /tmp/elabctl
+    curl -sL https://raw.githubusercontent.com/marcelbolten/elabctl/mayorlab/elabctl.sh -o /tmp/elabctl
     chmod -v +x /tmp/elabctl
     mv -v /tmp/elabctl "$me"
 }
